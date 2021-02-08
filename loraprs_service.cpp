@@ -16,11 +16,14 @@ void Service::setup(const Config &conf)
   config_ = conf;  
   previousBeaconMs_ = 0;
 
+  setup_display();
+  show_display("","ESP32-LoRaprs", "by sh123",5000);
+  
+
   ownCallsign_ = AX25::Callsign(config_.AprsLogin);
   if (!ownCallsign_.IsValid()) {
     Serial.println("Own callsign is not valid");
   }
-  
   aprsLoginCommand_ = String("user ") + config_.AprsLogin + String(" pass ") + 
     config_.AprsPass + String(" vers ") + CfgLoraprsVersion;
   if (config_.AprsFilter.length() > 0) {
@@ -49,7 +52,6 @@ void Service::setupWifi(const String &wifiName, const String &wifiKey)
 {
   if (!config_.IsClientMode) {
     Serial.print("WIFI connecting to " + wifiName);
-
     WiFi.setHostname("loraprs");
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifiName.c_str(), wifiKey.c_str());
@@ -65,6 +67,9 @@ void Service::setupWifi(const String &wifiName, const String &wifiKey)
     }
     Serial.println("ok");
     Serial.println(WiFi.localIP());
+    show_display("WiFi :", wifiName, 5000);
+
+    
   }
 }
 
@@ -95,6 +100,7 @@ bool Service::reconnectAprsis()
     return false;
   }
   Serial.println("ok");
+  show_display("AprsIS : ", "Connected to ", config_.AprsHost, 5000);
 
   aprsisConn_.print(aprsLoginCommand_);
   return true;
@@ -109,7 +115,7 @@ void Service::setupLora(long loraFreq, long bw, int sf, int cr, int pwr, int syn
   Serial.print(cr); Serial.print(", ");
   Serial.print(pwr); Serial.print(", ");
   Serial.print(sync, 16); Serial.print(", ");
-  Serial.print(enableCrc); Serial.print("...");
+  Serial.println(enableCrc); Serial.print("...");
   
   LoRa.setPins(config_.LoraPinSs, config_.LoraPinRst, config_.LoraPinDio0);
   
@@ -126,15 +132,19 @@ void Service::setupLora(long loraFreq, long bw, int sf, int cr, int pwr, int syn
     LoRa.enableCrc();
   }
   
-  Serial.println("ok");  
+  Serial.println("ok");
+  show_display(String("LoRa : "), bw + String("/") + sf + String("/") + cr,String("Ok"), 5000);
+   
 }
 
 void Service::setupBt(const String &btName)
 {
-  Serial.print("BT init " + btName + "...");
+  Serial.println("BT init "  + btName + "...");
   
   if (serialBt_.begin(btName)) {
     Serial.println("ok");
+    show_display("BT : ", btName, 5000);
+    clear_display();
   }
   else
   {
@@ -182,11 +192,15 @@ void Service::sendPeriodicBeacon()
       AX25::Payload payload(config_.AprsRawBeacon);
       if (payload.IsValid()) {
         sendAX25ToLora(payload);
+        show_display("BCN TX :", payload.ToString(), 10000);
+        clear_display();
+
         if (config_.EnableRfToIs) {
           sendToAprsis(payload.ToString());
         }
         Serial.println("Periodic beacon is sent");
-      }
+        Serial.println(payload.ToString());
+        }
       else {
         Serial.println("Beacon payload is invalid");
       }
@@ -212,7 +226,7 @@ void Service::sendToAprsis(const String &aprsMessage)
 void Service::onAprsisDataAvailable()
 {
   String aprsisData;
-  
+  Serial.println("onAprsisData");
   while (aprsisConn_.available() > 0) {
     char c = aprsisConn_.read();
     if (c == '\r') continue;
@@ -220,11 +234,14 @@ void Service::onAprsisDataAvailable()
     if (c == '\n') break;
     aprsisData += c;
   }
-
+  //show_display("NET :", aprsisData,1000);
+  //clear_display();
   if (config_.EnableIsToRf && aprsisData.length() > 0) {
     AX25::Payload payload(aprsisData);
     if (payload.IsValid()) {
       sendAX25ToLora(payload);
+      show_display("iGate TX :", aprsisData,2000);
+      clear_display();
     }
     else {
       Serial.println("Unknown payload from APRSIS, ignoring...");
@@ -258,6 +275,7 @@ bool Service::sendAX25ToLora(const AX25::Payload &payload)
 
 void Service::onLoraDataAvailable(int packetSize)
 {
+  Serial.println("onLoraDataAvailable");
   int rxBufIndex = 0;
   byte rxBuf[packetSize];
 
@@ -268,7 +286,6 @@ void Service::onLoraDataAvailable(int packetSize)
   }
   serialSend(Cmd::Data, rxBuf, rxBufIndex);
   long frequencyError = LoRa.packetFrequencyError();
-  
   if (config_.EnableAutoFreqCorrection && abs(frequencyError) > CfgFreqCorrMinHz) {
     config_.LoraFreq -= frequencyError;
     LoRa.setFrequency(config_.LoraFreq);
@@ -278,9 +295,9 @@ void Service::onLoraDataAvailable(int packetSize)
     sendSignalReportEvent(LoRa.packetRssi(), LoRa.packetSnr());
   }
   
-  if (!config_.IsClientMode) {
+  //if (!config_.IsClientMode) {
     processIncomingRawPacketAsServer(rxBuf, rxBufIndex);
-  }
+  //}
 }
 
 void Service::processIncomingRawPacketAsServer(const byte *packet, int packetLength) {
@@ -306,7 +323,8 @@ void Service::processIncomingRawPacketAsServer(const byte *packet, int packetLen
     
     String textPayload = payload.ToString(config_.EnableSignalReport ? signalReport : String());
     Serial.println(textPayload);
-  
+    show_display("RX : ",textPayload,5000);
+    clear_display();
     if (config_.EnableRfToIs) {
       sendToAprsis(textPayload);
       Serial.println("Packet sent to APRS-IS");
@@ -314,6 +332,8 @@ void Service::processIncomingRawPacketAsServer(const byte *packet, int packetLen
     if (config_.EnableRepeater && payload.Digirepeat(ownCallsign_)) {
       sendAX25ToLora(payload);
       Serial.println("Packet digirepeated");
+      show_display("Digi TX :", textPayload,5000);
+      clear_display();
     }
   } else {
     Serial.println("Skipping non-AX25 payload");

@@ -8,6 +8,7 @@
 #include <cppQueue.h>
 #include <endian.h>
 
+#include "display.h"
 #include "BluetoothSerial.h"
 #include "ax25_payload.h"
 #include "kiss_processor.h"

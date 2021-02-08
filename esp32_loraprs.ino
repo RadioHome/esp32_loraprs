@@ -74,7 +74,6 @@ void setup() {
 
   Serial.begin(115200);
   while (!Serial);
-  
   LoraPrs::Config config;
 
   initializeConfig(config);
