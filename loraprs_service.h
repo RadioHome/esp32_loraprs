@@ -61,12 +61,7 @@ protected:
   virtual void onRadioControlCommand(const std::vector<byte> &command);
 
 private:
-  struct LoraSignalLevelEvent {
-    int16_t rssi;
-    int16_t snr;
-  } __attribute__((packed));
-  
-  struct LoraControlCommand {
+  struct SetHardware {
     uint32_t freq;
     uint32_t bw;
     uint16_t sf;
@@ -76,6 +71,11 @@ private:
     uint8_t crc;
   } __attribute__((packed));
 
+  struct SignalReport {
+    int16_t rssi;
+    int16_t snr;
+  } __attribute__((packed));
+  
 private:
   const String CfgLoraprsVersion = "LoRAPRS 0.1";
 
@@ -85,6 +85,7 @@ private:
   const int CfgWiFiConnRetryMaxTimes = 10;
   const int CfgMaxAX25PayloadSize = 512;
   const int CfgFreqCorrMinHz = 150;
+  const int CfgMaxAprsInMessageSize = 255;
 
   // csma parameters, overriden with KISS commands
   const long CfgCsmaPersistence = 100;  // 255 for real time, lower for higher traffic

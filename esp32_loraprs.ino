@@ -2,8 +2,6 @@
 #include "WiFi.h"
 #include "loraprs_service.h"
 
-#define LED_TOGGLE_PERIOD   1000
-
 #if __has_include("/tmp/esp32_loraprs_config.h")
 #pragma message("Using external config")
 #include "/tmp/esp32_loraprs_config.h"
@@ -72,7 +70,7 @@ void setup() {
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, 1);
 
-  Serial.begin(115200);
+  Serial.begin(SERIAL_BAUD_RATE);
   while (!Serial);
   LoraPrs::Config config;
 

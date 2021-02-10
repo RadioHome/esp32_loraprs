@@ -15,33 +15,49 @@
 
 Amateur radio ESP32 based LoRa APRSDroid KISS Bluetooth modem + LoRa APRS-IS RX/TX iGate server over WiFI + digipeater + Codec2 DV modem (in conjunction with Android frontend application)
 
-Can be used in several modes: 
-- **LoRa APRS KISS client over bluetooth** 
-  - you need to use **APRSDroid** application (https://aprsdroid.org), connect to the modem using bluetooth, data will be re-transmitted through the LoRa radio, this is similar to APRSDroid micromodem - https://unsigned.io/micromodem/, received data will be sent back to the APRSDroid using bluetooth. By having two clients you can not only send your position, but also send and receive APRS messages
+Can be used in two modes, mode seleciton is done by changing `cfg.IsClientMode` or `CFG_IS_CLIENT_MODE` define in `config.h`:
+- **LoRa APRS KISS client over bluetooth**, WiFi and iGate are switched off, mobile or portable usage (/M, /P)
+  - you need to use **APRSDroid** application (https://aprsdroid.org), connect to the modem using bluetooth, data will be re-transmitted through the LoRa radio, this is similar to APRSDroid micromodem - https://unsigned.io/micromodem/, received data will be sent back to the APRSDroid using bluetooth
+  - by having two APRSDroid clients you can not only send your position, but also **send and receive APRS messages**
   - it is also possible to use **other KISS APRS clients** over Bluetooth serial, just use `rfcomm` on Linux to setup serial over Bluetooth and put up AX25 interface with `kissattach`, then use any existing Linux APRS clients, such as `xastir`, see section below for alternative Linux usage
-- **LoRa APRS iGate RX/TX server over WiFi + Digipeater**
-  - **RF to APRS-IS gating**, it will connect to your WiFI and will forward received APRS positions from RF LoRa into the APRS-IS network, it also reports client signal level, by appending it into the APRS comment, so you can see your signal reports in different locations (could be enabled or disabled from config). This way, it is also possible to setup portable iGate by connecting to your mobile phone's hotspot and provide power from the phone USB port by using OTA cable
+- **LoRa APRS iGate RX/TX server over WiFi + Digipeater**, stationary usage at home
+  - **RF to APRS-IS gating**, it will connect to your WiFI and will forward received APRS positions from RF LoRa into the APRS-IS network, it also reports client signal level, by appending it into the APRS comment, so you can see your signal reports in different locations (could be enabled or disabled from config). This way, it is also possible to setup portable iGate by connecting to your mobile phone's hotspot and provide power from the phone USB port by using USB-OTG cable
   - **APRS-IS to RF gating**, it is possible to enable it together with the filter in the config, so APRS-IS data will be forwarded to RF
   - **RF digirepating** for `WIDEn-n` new style paths
   - **Beaconing**, own station periodic beacon announcement to APRS-IS and RF
-- **LoRa Codec2 digital voice communication modem**
-  - just install [Codec2 Walkie-Talkie](https://github.com/sh123/codec2_talkie) on you Android phone, pair with the modem and you can communicate with each other by using digital voice [Codec2](http://www.rowetel.com/?page_id=452)
+  - if `cfg.BtName` is NOT set to empty string then server mode also allows to connect with KISS bluetooth client and use it simulatenously with iGate functionality, e.g. when stationary at home and want to use DV Codec2 Walkie-Talkie voice communication
+  
+Modem could be also used for **LoRa Codec2 digital voice DV communication**
+  - just install [Codec2 Walkie-Talkie](https://github.com/sh123/codec2_talkie) on you Android phone, pair with the modem and you can communicate with each other by using digital voice [Codec2](http://www.rowetel.com/?page_id=452), also modem can be controlled from this application (frequency change, bandwidth, spreading factor, etc)
 
 # Compatible Boards
-All work was done on ESP32-WROOM with custom made LoRa shield, if your ESP32 board is compatible then it should work, but there might be need to redefine pinouts to LoRa module if it differs (see further description in Software Setup section), currently pinouts are connected from LoRa to ESP32-WROOM as (SS/RST/DIO0 could be redefined in config.h):
+All work was done on ESP32-WROOM with custom made LoRa shield, Arduino Board is "ESP32 Dev Module".
+
+If your ESP32 board is compatible or has build in LoRa module then it should work without redefining pinouts, for custom shields there might be need to redefine pinouts to LoRa module if it differs (see further description in Software Setup section), currently pinouts are connected from LoRa to ESP32-WROOM as (SS/RST/DIO0 could be redefined in config.h):
 
 ![alt text](images/pinouts.png)
 
-- SS: GPIO_5
-- RST: GPIO_26
-- DIO0: GPIO_14
-- MOSI: GPIO_23/VSPI_MOSI
-- MISO: GPIO_19/VSPI_MISO
-- SCK: GPIO_18/VSPI_SCK
+Pinouts:
+- Common SPI:
+  - MOSI: GPIO_23/VSPI_MOSI
+  - MISO: GPIO_19/VSPI_MISO
+  - SCK: GPIO_18/VSPI_SCK
+- Board specific:
+  - SS/CS/NSS: GPIO_5
+  - RST/RESET: GPIO_26
+  - DIO0/IRQ: GPIO_14
 
-Supported/Tested:
-- **T-Beam LoRa**,
-- **WIFI LoRa 32 (V2)**
+Supported (built-in screen is not used), just select board in **Arduino IDE->Tools->Board**, no need to redefine pinouts:
+  - **T-Beam LoRa**
+  - **LoPy**, **LoPy4**
+  - **TTGO LoRa32 v1**
+
+Require LoRa module pinout definitions in `config.h`:
+- **Heltec WiFi LoRa 32 (v2)**, redefine pinouts as
+   ```
+   #define LORA_RST              14
+   #define LORA_IRQ              26
+   ```
 
 # Software Dependencies
 Install via libraries:
@@ -51,7 +67,7 @@ Install via libraries:
 - cppQueue library: https://github.com/SMFSW/Queue
 
 # Software Setup
-- **nb! select next partition scheme for esp32 in Arduino IDE Tools menu:** "Minimal SPIFFS (1.9 MB APP with OTA/190 KB SPIFFS)"
+- **NB! select next partition scheme for ESP32 in Arduino IDE Tools menu:** "Minimal SPIFFS (1.9 MB APP with OTA/190 KB SPIFFS)"
   - for boards, which do not have this option, need to modify `~/.arduino15/packages/esp32/hardware/esp32/1.0.4/boards.txt` and add required partition option
 - **use 80 MHz ESP32 frequency** in Arduino SDK, it will prolong battery life when operating portable, higher CPU speed is not required, there are no CPU intensive operations
 - when setting up APRSDroid, use **"TNC (KISS)"** connection protocol in Connection Preferences -> Connection Protocol
@@ -128,16 +144,12 @@ It is possible to use modem **in client mode** with other generic Linux AX25/APR
 - Also, it might be useful to disable CRC check for LoRa packets with `cfg.LoraEnableCrc` parameter equal to `false`. Some broken bits in one speech frame will cause audio being scrambled, it might be better then longer gap when complete packet is dropped.
 
 # KISS command extensions
-When `EnableKissExtensions` configuration parameter is set to `true` modem will send signal level reports through KISS command `0x30` and client application will be able to control modem by using KISS command `0x10`, this way client application (such as [Codec2 Walkie-Talkie](https://github.com/sh123/codec2_talkie)) can display signal levels and change modem parameters dynamically.
+When `EnableKissExtensions` configuration parameter is set to `true` modem will be able to handle SetHardware KISS command 6 for setting modem parameters and will send event about signal level with KISS command 7, both are operating on KISS port 0. This way client application (such as [Codec2 Walkie-Talkie](https://github.com/sh123/codec2_talkie)) can display signal levels and change modem parameters dynamically.
 
-Payloads are sent and expected as big endian and defined as:
+Payloads for commands are sent and expected as big endian and defined as:
 ```
-  struct LoraSignalLevelEvent {
-    int16_t rssi;
-    int16_t snr;
-  } __attribute__((packed));
-  
-  struct LoraControlCommand {
+  // KISS SetHardware 6
+  struct SetHardware {
     uint32_t freq;
     uint32_t bw;
     uint16_t sf;
@@ -145,6 +157,12 @@ Payloads are sent and expected as big endian and defined as:
     uint16_t pwr;
     uint16_t sync;
     uint8_t crc;
+  } __attribute__((packed));
+  
+  // KISS command 7
+  struct SignalReport {
+    int16_t rssi;
+    int16_t snr;  // snr * 100
   } __attribute__((packed));
 ```
 
@@ -170,7 +188,7 @@ Payloads are sent and expected as big endian and defined as:
 - Interference
   - Monitor your planned frequency, such as 433.775 MHz for ISM device activity, if there is strong interference from other users tune up or down it to minimize interference, it might be critical for long range
 - Weather
-  - Rain and high humidity levels decrease signal level by about **~3-6 dB**
-- Could not get modems communicate with each other when using spreading factor 6
+  - Rain and high humidity levels decrease signal level by about **~3-6 dB** on 433 MHz, could be higher on 868 MHz
+- Could not get modems communicate with each other when using spreading factor 6, need to use implicit LoRa header mode
 - It might be useful to add additional pass band filter or broadcast FM radio reject filter, it seem to improve sensitivity when using external base antenna
 
