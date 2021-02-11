@@ -238,7 +238,7 @@ void Service::onAprsisDataAvailable()
       break;
     }
   }
-  //show_display("NET :", aprsisData,1000);
+  //show_display("NET RX :", aprsisData,1000);
   //clear_display();
   if (config_.EnableIsToRf && aprsisData.length() > 0) {
     AX25::Payload payload(aprsisData);
