@@ -67,7 +67,7 @@ void Service::setupWifi(const String &wifiName, const String &wifiKey)
     }
     Serial.println("ok");
     Serial.println(WiFi.localIP());
-    show_display("WiFi :", wifiName, 5000);
+    show_display("WiFi :", wifiName,"" , 5000);
 
     
   }
@@ -143,7 +143,7 @@ void Service::setupBt(const String &btName)
   
   if (serialBt_.begin(btName)) {
     Serial.println("ok");
-    show_display("BT : ", btName, 5000);
+    show_display("BT : ", btName,"", 5000);
     clear_display();
   }
   else
@@ -192,7 +192,7 @@ void Service::sendPeriodicBeacon()
       AX25::Payload payload(config_.AprsRawBeacon);
       if (payload.IsValid()) {
         sendAX25ToLora(payload);
-        show_display("BCN TX :", payload.ToString(), 10000);
+        show_display("BCN TX :", payload.ToString(),"", 10000);
         clear_display();
 
         if (config_.EnableRfToIs) {
@@ -238,13 +238,13 @@ void Service::onAprsisDataAvailable()
       break;
     }
   }
-  //show_display("NET RX :", aprsisData,1000);
+  //show_display("NET RX :", aprsisData,"",1000);
   //clear_display();
   if (config_.EnableIsToRf && aprsisData.length() > 0) {
     AX25::Payload payload(aprsisData);
     if (payload.IsValid()) {
       sendAX25ToLora(payload);
-      show_display("iGate TX :", aprsisData,2000);
+      show_display("iGate TX :", aprsisData,"",2000);
       clear_display();
     }
     else {
@@ -327,7 +327,7 @@ void Service::processIncomingRawPacketAsServer(const byte *packet, int packetLen
     
     String textPayload = payload.ToString(config_.EnableSignalReport ? signalReport : String());
     Serial.println(textPayload);
-    show_display("RX : ",textPayload,5000);
+    show_display("RX : ",textPayload,"",5000);
     clear_display();
     if (config_.EnableRfToIs) {
       sendToAprsis(textPayload);
@@ -336,7 +336,7 @@ void Service::processIncomingRawPacketAsServer(const byte *packet, int packetLen
     if (config_.EnableRepeater && payload.Digirepeat(ownCallsign_)) {
       sendAX25ToLora(payload);
       Serial.println("Packet digirepeated");
-      show_display("Digi TX :", textPayload,5000);
+      show_display("Digi TX :", textPayload,"",5000);
       clear_display();
     }
   } else {
