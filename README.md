@@ -9,6 +9,7 @@
 * [Digital voice with Codec2](#digital-voice-with-codec2)
 * [KISS command extensions](#kiss-command-extensions)
 * [Test Results](#test-results)
+* [TODO](#todo)
 
 # Introduction
 ![alt text](images/diagram.png)
@@ -27,7 +28,7 @@ Can be used in two modes, mode seleciton is done by changing `cfg.IsClientMode` 
   - **Beaconing**, own station periodic beacon announcement to APRS-IS and RF
   - if `cfg.BtName` is NOT set to empty string then server mode also allows to connect with KISS bluetooth client and use it simulatenously with iGate functionality, e.g. when stationary at home and want to use DV Codec2 Walkie-Talkie voice communication
   
-Modem could be also used for **LoRa Codec2 digital voice DV communication**
+Modem could also be used for **LoRa Codec2 digital voice DV communication**
   - just install [Codec2 Walkie-Talkie](https://github.com/sh123/codec2_talkie) on you Android phone, pair with the modem and you can communicate with each other by using digital voice [Codec2](http://www.rowetel.com/?page_id=452), also modem can be controlled from this application (frequency change, bandwidth, spreading factor, etc)
 
 # Compatible Boards
@@ -47,6 +48,8 @@ Pinouts:
   - RST/RESET: GPIO_26
   - DIO0/IRQ: GPIO_14
 
+![alt text](images/tracker.jpg)
+
 Supported (built-in screen is not used), just select board in **Arduino IDE->Tools->Board**, no need to redefine pinouts:
   - **T-Beam LoRa**
   - **LoPy**, **LoPy4**
@@ -64,7 +67,7 @@ Install via libraries:
 - Arduino ESP32 library: https://github.com/espressif/arduino-esp32
 - LoRa arduino library: https://github.com/sandeepmistry/arduino-LoRa
 - Arduino Timer library: https://github.com/contrem/arduino-timer
-- cppQueue library: https://github.com/SMFSW/Queue
+- CircularBuffer library: https://github.com/rlogiacco/CircularBuffer
 
 # Software Setup
 - **NB! select next partition scheme for ESP32 in Arduino IDE Tools menu:** "Minimal SPIFFS (1.9 MB APP with OTA/190 KB SPIFFS)"
@@ -100,6 +103,7 @@ Install via libraries:
    - `cfg.EnableIsToRf` set to `true` to forward APRS-IS traffic to RF, see also `cfg.AprsFilter` for traffic filtering
    - `cfg.EnableRepeater` set to `true` to enable packet repeater
    - `cfg.EnableBeacon` set to `true` to enable periodic beacons specified in `cfg.AprsRawBeacon` with period specified in `cfg.AprsRawBeaconPeriodMinutes` into RF and APRS-IS if `cfg.EnableRfToIs` is enabled
+   - `cfg.LoraUseIsr` set to `true` to enable LoRa incoming packet handling using interrupts in continous RX mode suitable for speech data, otherwise set to `false` for single packet polling mode
 
 # Protocol Compatibility
 - Make sure LoRa sync word and other LoRa parameters match
@@ -192,3 +196,7 @@ Payloads for commands are sent and expected as big endian and defined as:
 - Could not get modems communicate with each other when using spreading factor 6, need to use implicit LoRa header mode
 - It might be useful to add additional pass band filter or broadcast FM radio reject filter, it seem to improve sensitivity when using external base antenna
 
+# TODO
+- Support for more devices and devices with built-in OLED screen (merge from [branch](https://github.com/RadioHome/esp32_loraprs/tree/oled))
+- Investigate support for [M17 Protocol](http://m17project.org) reflector gating in addition to APRS-IS when M17 protocol is used by the client application
+- Improve CSMA logic and if possible add support for CAD
