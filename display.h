@@ -6,7 +6,7 @@
 
 #define OLED_SDA		21
 #define OLED_SCL		22
-//#define OLED_RESET		16
+#define OLED_RESET		16
 
 void setup_display();
 void clear_display();

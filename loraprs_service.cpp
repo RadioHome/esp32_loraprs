@@ -67,7 +67,8 @@ void Service::setupWifi(const String &wifiName, const String &wifiKey)
     }
     Serial.println("ok");
     Serial.println(WiFi.localIP());
-    show_display("WiFi :", wifiName,"" , 5000);
+    //IPAddress ip = WiFi.localIP();
+    show_display("WiFi :", wifiName,WiFi.localIP().toString(), 5000);
 
     
   }
@@ -137,6 +138,7 @@ void Service::setupLora(long loraFreq, long bw, int sf, int cr, int pwr, int syn
     LoRa.receive();
   }
   Serial.println("ok");
+  show_display("LoRa cfg : ", "", "BW:" + String(bw) + " SF:" + String(sf) + " CR:" + String(cr), 5000);
 }
 
 void Service::setupBt(const String &btName)
@@ -145,8 +147,8 @@ void Service::setupBt(const String &btName)
   
   if (serialBt_.begin(btName)) {
     Serial.println("ok");
-    show_display("BT : ", btName,"", 5000);
-    clear_display();
+    show_display("BT : ", "", btName, 5000);
+    
   }
   else
   {
@@ -215,9 +217,8 @@ void Service::sendPeriodicBeacon()
       AX25::Payload payload(config_.AprsRawBeacon);
       if (payload.IsValid()) {
         sendAX25ToLora(payload);
-        show_display("BCN TX :", payload.ToString(),"", 10000);
-        clear_display();
-
+        show_display("BCN TX :", payload.ToString(),"", 5000);
+        
         if (config_.EnableRfToIs) {
           sendToAprsis(payload.ToString());
         }
@@ -260,14 +261,14 @@ void Service::onAprsisDataAvailable()
       break;
     }
   }
-  //show_display("NET RX :", aprsisData,"",1000);
-  //clear_display();
+  show_display("NET RX :", aprsisData,"",1000);
+  
   if (config_.EnableIsToRf && aprsisData.length() > 0) {
     AX25::Payload payload(aprsisData);
     if (payload.IsValid()) {
       sendAX25ToLora(payload);
       show_display("iGate TX :", aprsisData,"",2000);
-      clear_display();
+      
     }
     else {
       Serial.println("Unknown payload from APRSIS, ignoring");
@@ -295,6 +296,7 @@ bool Service::sendAX25ToLora(const AX25::Payload &payload)
   }
   queueSerialToRig(Cmd::Data, buf, bytesWritten);
   return true;
+  
 }
 
 void Service::onRigPacket(void *packet, int packetLength)
@@ -315,9 +317,9 @@ void Service::onRigPacket(void *packet, int packetLength)
     sendSignalReportEvent(LoRa.packetRssi(), LoRa.packetSnr());
   }
 
-  if (!config_.IsClientMode) {
+  //if (!config_.IsClientMode) {
     processIncomingRawPacketAsServer((const byte*)packet, packetLength);
-  }
+  //}
 }
 
 void Service::loraReceive(int packetSize)
@@ -355,6 +357,8 @@ void Service::processIncomingRawPacketAsServer(const byte *packet, int packetLen
     
     String textPayload = payload.ToString(config_.EnableSignalReport ? signalReport : String());
     Serial.println(textPayload);
+    show_display("LoRa RX : ", textPayload,"", 5000);
+     
     if (config_.EnableRfToIs) {
       sendToAprsis(textPayload);
       Serial.println("Packet sent to APRS-IS");
@@ -363,18 +367,19 @@ void Service::processIncomingRawPacketAsServer(const byte *packet, int packetLen
       sendAX25ToLora(payload);
       Serial.println("Packet digirepeated");
       show_display("Digi TX :", textPayload,"",5000);
-      clear_display();
+      
     }
   } else {
     Serial.println("Skipping non-AX25 payload");
   }
+  
 }
 
 bool Service::onRigTxBegin()
 {
   delay(CfgPollDelayMs);
   return (LoRa.beginPacket() == 1);
-}
+   }
 
 void Service::onRigTx(byte b)
 {
@@ -384,7 +389,9 @@ void Service::onRigTx(byte b)
 void Service::onRigTxEnd()
 {
   LoRa.endPacket(true);
-}
+  Serial.println("TX");
+  show_display("TX","","",5000);
+ }
 
 void Service::onSerialTx(byte b)
 {
@@ -404,6 +411,7 @@ bool Service::onSerialRx(byte *b)
   }
   *b = (byte)rxResult;
   return true;
+ 
 }
 
 void Service::onControlCommand(Cmd cmd, byte value)
