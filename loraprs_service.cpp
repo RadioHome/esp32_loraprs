@@ -261,13 +261,13 @@ void Service::onAprsisDataAvailable()
       break;
     }
   }
-  show_display("NET RX :", aprsisData,"",1000);
+  show_display("NET RX :", aprsisData,"",5000);
   
   if (config_.EnableIsToRf && aprsisData.length() > 0) {
     AX25::Payload payload(aprsisData);
     if (payload.IsValid()) {
       sendAX25ToLora(payload);
-      show_display("iGate TX :", aprsisData,"",2000);
+      show_display("iGate TX :", aprsisData,"",5000);
       
     }
     else {
