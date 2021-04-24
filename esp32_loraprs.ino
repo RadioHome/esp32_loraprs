@@ -28,13 +28,13 @@ void initializeConfig(LoraPrs::Config &cfg) {
   cfg.LoraCodingRate = CFG_LORA_CR;
   cfg.LoraSync = 0x34;
   cfg.LoraPower = CFG_LORA_PWR;
-  cfg.LoraEnableCrc = CFG_LORA_ENABLE_CRC; // set to false for speech data
+  cfg.LoraEnableCrc = CFG_LORA_ENABLE_CRC; // set to false for speech streaming data
 
   // lora pinouts
   cfg.LoraPinSs = CFG_LORA_PIN_SS;
   cfg.LoraPinRst = CFG_LORA_PIN_RST;
   cfg.LoraPinDio0 = CFG_LORA_PIN_DIO0;
-  cfg.LoraUseIsr = true;  // set to false for polling instead of interrupts
+  cfg.LoraUseIsr = CFG_LORA_USE_ISR;  // set to true for incoming packet ISR usage (stream mode, e.g. speech)
 
   // aprs configuration
   cfg.AprsHost = "rotate.aprs2.net";
@@ -52,8 +52,11 @@ void initializeConfig(LoraPrs::Config &cfg) {
   cfg.WifiSsid = CFG_WIFI_SSID;
   cfg.WifiKey = CFG_WIFI_KEY;
 
-  // configuration flags and features
+  // frequency correction
   cfg.EnableAutoFreqCorrection = CFG_FREQ_CORR;  // automatic tune to any incoming packet frequency
+  cfg.AutoFreqCorrectionDeltaHz = CFG_FREQ_CORR_DELTA;
+
+  // configuration flags and features
   cfg.EnableSignalReport = true;  // signal report will be added to the comment sent to aprsis
   cfg.EnablePersistentAprsConnection = CFG_PERSISTENT_APRS; // keep aprsis connection open, otherwise connect on new data only
   cfg.EnableRfToIs = CFG_RF_TO_IS;  // send data from rf to aprsis
