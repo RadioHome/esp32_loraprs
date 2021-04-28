@@ -29,8 +29,8 @@
 
 #define CFG_BT_NAME           "Loraprs-1"
 
-#define CFG_APRS_LOGIN        "F8COD-10"
-#define CFG_APRS_PASS         "12949"
+#define CFG_APRS_LOGIN        "NOCALL-10"
+#define CFG_APRS_PASS         "12345"
 #define CFG_APRS_FILTER	      "r/48.749/2.506/25"
 #define CFG_APRS_RAW_BKN      "F8COD-10>APZMDM,WIDE1-1:!4844.96N/00230.38E#LoRA 433.775MHz/BW125/SF12/CR5/0x34"
 
